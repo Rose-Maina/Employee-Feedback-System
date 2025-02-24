@@ -1,13 +1,10 @@
-
 import { useState, useEffect } from "react";
 import axios from "axios";
 
 const AdminDashboard = () => {
   const [employees, setEmployees] = useState([]);
-  const [selectedEmployee, setSelectedEmployee] = useState("");
-  const [assignedTo, setAssignedTo] = useState([]);
   const [assignments, setAssignments] = useState([]);
-  const [feedbacks, setFeedbacks] = useState([]);
+  const [selectedAssignments, setSelectedAssignments] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -15,12 +12,10 @@ const AdminDashboard = () => {
     Promise.all([
       axios.get("http://localhost:3000/users"),
       axios.get("http://localhost:3000/assignments"),
-      axios.get("http://localhost:3000/feedbacks"),
     ])
-    .then(([usersResponse, assignmentsResponse, feedbacksResponse]) => {
-      setEmployees(usersResponse.data);
+    .then(([usersResponse, assignmentsResponse]) => {
+      setEmployees(usersResponse.data.filter(user => user.role === "employee"));
       setAssignments(assignmentsResponse.data);
-      setFeedbacks(feedbacksResponse.data);
       setLoading(false);
     })
     .catch((err) => {
@@ -30,34 +25,29 @@ const AdminDashboard = () => {
     });
   }, []);
 
-  const handleAssign = () => {
-    if (!selectedEmployee) {
-      alert("Please select an employee to assign feedback to.");
-      return;
-    }
+  const handleAssign = (employeeId) => {
+    const assignedToIds = selectedAssignments[employeeId] || [];
 
-    if (assignedTo.length < 3) {
-      alert("Please select at least three employees to provide feedback.");
+    if (assignedToIds.length === 0) {
+      alert("Please select at least one feedback recipient.");
       return;
     }
 
     axios.post("http://localhost:3000/assignments", {
       manager_id: 1,
-      employee_id: selectedEmployee,
-      assigned_to_ids: assignedTo,
+      employee_id: employeeId,
+      assigned_to_ids: assignedToIds,
     }, {
       headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
     })
     .then(() => {
-      alert("Employee successfully assigned feedback!");
-      const newAssignments = assignedTo.map(assignedId => ({
-        employee_id: selectedEmployee,
-        assigned_to_id: assignedId
-      }));
+      alert("Feedback recipients assigned successfully!");
+      setAssignments([...assignments, ...assignedToIds.map(id => ({
+        employee_id: employeeId,
+        assigned_to_id: id
+      }))]);
 
-      setAssignments([...assignments, ...newAssignments]);
-      setSelectedEmployee("");
-      setAssignedTo([]);
+      setSelectedAssignments({ ...selectedAssignments, [employeeId]: [] });
     })
     .catch((error) => {
       console.error("Error assigning employees:", error.response?.data || error.message);
@@ -66,95 +56,99 @@ const AdminDashboard = () => {
   };
 
   return (
-    <div className="dashboard-container">
+    <div className="dashboard-wrapper">
       <header className="dashboard-header">
-        <h1>Admin Dashboard</h1>
-        <p>Welcome to the admin panel.</p>
+        <h1>Employee Feedback System</h1>
         <button className="logout-button" onClick={() => {
           localStorage.removeItem("token");
           localStorage.removeItem("email");
           window.location.href = "/";
-  }}>
-        Logout
-        </button>
+        }}>Logout</button>
       </header>
 
-
-      {loading ? (
-        <p className="loading-text">Loading data...</p>
-      ) : error ? (
-        <p className="error-text">{error}</p>
-      ) : (
-        <>
-          <h2>All Employees</h2>
-          <div className="table-container">
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Email</th>
-                </tr>
-              </thead>
-              <tbody>
-                {employees.map(employee => (
-                  <tr key={employee.id}>
-                    <td>{employee.name}</td>
-                    <td>{employee.email}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          <h2>Assign Feedback</h2>
-          <label>Select Employee:</label>
-          <select onChange={(e) => setSelectedEmployee(e.target.value)} className="dropdown">
-            <option value="">Select Employee</option>
-            {employees.map(employee => (
-              <option key={employee.id} value={employee.id}>{employee.name}</option>
-            ))}
-          </select>
-
-          <label>Assign To (Select 3-4 employees):</label>
-          <select multiple onChange={(e) => setAssignedTo([...e.target.selectedOptions].map(option => option.value))} className="dropdown">
-            {employees.map(employee => (
-              <option key={employee.id} value={employee.id}>{employee.name}</option>
-            ))}
-          </select>
-
-          <button className="button" onClick={handleAssign}>Assign Feedback</button>
-
-          <h2>Feedback Assignments & Status</h2>
-            <div className="table-container">
-              <table className="table">
-                <thead>
-                  <tr>
-                    <th>Employee Assigned</th>
-                    <th>Assigned To</th>
-                    <th>Feedback Given</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {assignments.map((assignment, index) => {
-                    const employee = employees.find(e => e.id === assignment.employee_id) || { name: "Unknown" };
-                    const assigned = employees.find(e => e.id === assignment.assigned_to_id) || { name: "Unknown" };
-
-                    const feedback = feedbacks.find(fb => fb.giver_id === assignment.employee_id && fb.receiver_id === assignment.assigned_to_id);
-
-                    return (
-                      <tr key={index}>
+      <div className="dashboard-container">
+        <h2>Admin Dashboard</h2>
+        {loading ? (
+          <p className="loading-text">Loading data...</p>
+        ) : error ? (
+          <p className="error-text">{error}</p>
+        ) : (
+          <div className="dashboard-content">
+            {/* Assign Feedback Table (Left Side) */}
+            <div className="assign-feedback">
+              <h2>Assign Feedback Recipients</h2>
+              <div className="table-container">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Feedback Assignee</th>
+                      <th>Select Feedback Recipients</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {employees.map((employee) => (
+                      <tr key={employee.id}>
                         <td>{employee.name}</td>
-                        <td>{assigned.name}</td>
-                        <td>{feedback ? `${feedback.content} (Rating: ${feedback.rating})` : "No feedback yet"}</td>
+                        <td>
+                          <select
+                            multiple
+                            className="dropdown"
+                            value={selectedAssignments[employee.id] || []}
+                            onChange={(e) => {
+                              setSelectedAssignments({
+                                ...selectedAssignments,
+                                [employee.id]: [...e.target.selectedOptions].map(option => option.value)
+                              });
+                            }}
+                          >
+                            {employees.filter(e => e.id !== employee.id).map(e => (
+                              <option key={e.id} value={e.id}>{e.name}</option>
+                            ))}
+                          </select>
+                        </td>
+                        <td>
+                          <button className="button" onClick={() => handleAssign(employee.id)}>Assign</button>
+                        </td>
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </>
-                  )}
-                </div>
+
+            {/* Feedback Assignments Table (Right Side) */}
+            <div className="feedback-status">
+              <h2>Feedback Assignments & Status</h2>
+              <div className="table-container">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Feedback Assignee</th>
+                      <th>Feedback Recipients</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {employees.map(employee => {
+                      const assignedRecipients = assignments.filter(a => a.employee_id === employee.id);
+                      return (
+                        <tr key={employee.id}>
+                          <td>{employee.name}</td>
+                          <td>{assignedRecipients.length > 0 
+                            ? assignedRecipients.map(a => employees.find(e => e.id === a.assigned_to_id)?.name).join(", ")
+                            : "No recipients assigned yet"}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 

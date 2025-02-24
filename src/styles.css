@@ -237,108 +237,46 @@ button:hover {
   margin-bottom: 10px;
 }
 
-/* Table Styling */
-.table {
+/* Full-Screen Dashboard */
+.dashboard-wrapper {
   width: 100%;
-  border-collapse: collapse;
-  margin-top: 20px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
-.table th, .table td {
-  border: 1px solid #ddd;
-  padding: 10px;
-  text-align: left;
-}
-
-.table th {
+/* Fixed Header */
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 30px;
   background-color: #007bff;
   color: white;
-}
-/* Dashboard Layout */
-.dashboard-container {
-  max-width: 900px;
-  margin: auto;
-  padding: 20px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-  text-align: center;
-}
-
-.dashboard-container h1 {
-  font-size: 26px;
-  color: #007bff;
-  margin-bottom: 10px;
-}
-
-.loading-text, .no-feedback-text {
-  font-size: 18px;
-  color: #888;
-}
-
-.error-text {
-  font-size: 16px;
-  color: red;
-}
-
-.success-text {
-  font-size: 16px;
-  color: green;
-}
-
-/* Feedback Grid Layout */
-.feedback-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px;
-  margin-top: 20px;
-}
-
-/* Feedback Card */
-.feedback-card {
-  background: #f8f9fa;
-  padding: 15px;
-  border-radius: 8px;
-  box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.1);
-  text-align: center;
-}
-
-.feedback-card h3 {
-  color: #333;
-  margin-bottom: 10px;
-}
-/* Admin Dashboard Container */
-.dashboard-container {
-  max-width: 900px;
-  margin: auto;
-  padding: 20px;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-  text-align: center;
-  position: relative;
-}
-
-/* Fixed Header for Dashboard */
-.dashboard-header {
-  background: white;
-  padding: 15px 0;
-  position: sticky;
+  position: fixed;
   top: 0;
-  z-index: 10;
-  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+  left: 0;
+  width: 50%;
+  z-index: 50;
 }
 
-/* Scrollable Table */
+/* Two-Column Layout */
+.dashboard-content {
+  display: flex;
+  justify-content: space-evenly;
+  align-items: flex-start;
+  width: 100%;
+  height: calc(100vh - 120px);
+}
+
+/* Tables */
 .table-container {
-  max-height: 400px;
+  max-height: 75vh;
   overflow-y: auto;
-  margin-top: 10px;
   border: 1px solid #ddd;
   border-radius: 8px;
 }
 
-/* Table Styling */
 .table {
   width: 100%;
   border-collapse: collapse;
@@ -348,7 +286,6 @@ button:hover {
   border: 1px solid #ddd;
   padding: 10px;
   text-align: left;
-  background: white;
 }
 
 .table th {
